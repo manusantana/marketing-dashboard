@@ -1,17 +1,20 @@
 from fastapi import APIRouter, UploadFile, Depends
-import shutil, os
-from db.session import get_db
 from sqlalchemy.orm import Session
-from utils.excel_loader import load_excel_to_db
+import tempfile
+import shutil
+from db.session import get_db
+from services.ingest import load_sales_from_excel
 
 router = APIRouter()
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@router.post("/")
+@router.post("/excel")
 async def upload_excel(file: UploadFile, db: Session = Depends(get_db)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    load_excel_to_db(file_path, db)
-    return {"status": "ok", "filename": file.filename}
+    # Guardar temporalmente el Excel
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    # Procesar el Excel
+    load_sales_from_excel(tmp_path, db)
+
+    return {"status": "ok", "message": "Datos cargados correctamente"}
