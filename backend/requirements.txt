@@ -4,3 +4,5 @@ sqlalchemy
 psycopg2-binary
 pandas
 python-multipart
+alembic
+python-dotenv

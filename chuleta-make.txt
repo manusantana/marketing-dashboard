@@ -1,0 +1,7 @@
+make up        # Levanta todo el stack
+make down      # Detiene y elimina contenedores
+make logs      # Logs en tiempo real
+make ps        # Ver estado de contenedores
+make backend   # Entra al contenedor backend
+make frontend  # Entra al contenedor frontend
+make db        # Entra a Postgres

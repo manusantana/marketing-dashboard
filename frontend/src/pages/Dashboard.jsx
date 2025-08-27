@@ -6,9 +6,13 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
 
   useEffect(() => {
+    console.log("🚀 Lanzando petición a /kpis/basic");
     client.get("/kpis/basic")
-      .then(res => setKpis(res.data))
-      .catch(err => console.error(err));
+      .then(res => {
+        console.log("📊 KPIs recibidos:", res.data);
+        setKpis(res.data);
+      })
+      .catch(err => console.error("❌ Error al cargar KPIs:", err));
   }, []);
 
   if (!kpis) return <p className="p-4">Cargando KPIs...</p>;
