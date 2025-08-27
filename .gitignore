@@ -1,0 +1,54 @@
+# ========================
+# Node.js / React / Vite
+# ========================
+node_modules/
+frontend/node_modules/
+dist/
+build/
+.cache/
+.vite/
+
+# ========================
+# Python / FastAPI
+# ========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.sqlite3
+*.db
+*.log
+
+# Virtual envs
+venv/
+.env/
+.env.local
+.env.*.local
+
+# Alembic migrations cache
+backend/migrations/versions/*.pyc
+
+# ========================
+# OS / IDE / Editor
+# ========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+
+# VSCode / JetBrains
+.vscode/
+.idea/
+
+# ========================
+# Docker
+# ========================
+*.pid
+*.seed
+*.pid.lock
+
+# Local volumes / data
+postgres_data/
+uploads/
