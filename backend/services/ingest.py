@@ -1,45 +1,50 @@
 import pandas as pd
+from pathlib import Path
 from sqlalchemy.orm import Session
-from db.models import Sale
+from db.models import Sale  # ya lo usas en analytics
+from datetime import datetime
 
-def load_sales_from_excel(file_path: str, db: Session):
-    try:
-        df = pd.read_excel(file_path)
-        print("📥 Excel cargado con columnas:", df.columns.tolist())
+def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.rename(columns=lambda c: str(c).strip().lower())
+    # Normaliza nombres esperados: date, customer, product, amount, margin, quantity
+    mapping = {
+        "fecha": "date", "cliente": "customer", "producto": "product",
+        "importe": "amount", "margen": "margin", "cantidad": "quantity",
+    }
+    df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+    for col in ("amount", "margin"):
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
+    if "quantity" in df.columns:
+        df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0).astype(int)
+    return df
 
-        # Mapeo Excel → DB
-        df = df.rename(columns={
-            "T.AñoMes": "date",
-            "C.Cliente": "customer",
-            "A.Descripcion": "product",
-            "Venta": "amount",
-            "Margen": "margin",
-            "Cantidad": "quantity"
-        })
+def _bulk_upsert_sales(df: pd.DataFrame, db: Session):
+    # Inserción simple (MVP). Si luego quieres upsert real, lo cambiamos.
+    records = []
+    for _, r in df.iterrows():
+        s = Sale(
+            date=r.get("date"),
+            customer=r.get("customer"),
+            product=r.get("product"),
+            amount=float(r.get("amount", 0) or 0),
+            margin=float(r.get("margin", 0) or 0),
+            quantity=int(r.get("quantity", 0) or 0),
+        )
+        records.append(s)
+    db.add_all(records)
+    db.commit()
 
-        # ⚠️ Filtrar solo columnas que nos interesan (las que existan)
-        expected_cols = ["date", "customer", "product", "amount", "margin", "quantity"]
-        available_cols = [c for c in expected_cols if c in df.columns]
-        df = df[available_cols]
+def load_sales_from_excel(path: Path, db: Session):
+    df = pd.read_excel(path)
+    df = _normalize_df(df)
+    _bulk_upsert_sales(df, db)
+    return df
 
-        print("✅ Columnas finales utilizadas:", df.columns.tolist())
-        print("🔎 Primeras filas:", df.head().to_dict(orient="records"))
-
-        # Insertar fila a fila
-        for _, row in df.iterrows():
-            sale = Sale(
-                date=pd.to_datetime(row.get("date")).date() if pd.notna(row.get("date")) else None,
-                customer=str(row.get("customer", "")),
-                product=str(row.get("product", "")),
-                amount=float(row.get("amount", 0) or 0),
-                margin=float(row.get("margin", 0) or 0),
-                quantity=int(row.get("quantity", 0) or 0),
-            )
-            db.add(sale)
-
-        db.commit()
-        print("🎉 Datos cargados correctamente")
-
-    except Exception as e:
-        print(f"❌ Error procesando Excel: {e}")
-        raise
+def load_sales_from_csv(path: Path, db: Session):
+    df = pd.read_csv(path)
+    df = _normalize_df(df)
+    _bulk_upsert_sales(df, db)
+    return df
