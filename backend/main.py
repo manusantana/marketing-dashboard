@@ -10,14 +10,15 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # en prod restringe
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(upload.router, prefix="/upload", tags=["Upload"])
-app.include_router(kpis.router, prefix="/kpis", tags=["KPIs"])
+# ⬇️ sin prefix aquí (ya está en cada router)
+app.include_router(upload.router)
+app.include_router(kpis.router)
 
 @app.get("/")
 def root():
