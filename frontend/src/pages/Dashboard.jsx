@@ -10,7 +10,16 @@ export default function Dashboard() {
     client.get("/kpis/basic")
       .then(res => {
         console.log("📊 KPIs recibidos:", res.data);
-        setKpis(res.data);
+
+        // 🔹 Mapeamos lo que devuelve el backend
+        setKpis({
+          ventas_totales: res.data.turnover, // antes turnover
+          num_pedidos: res.data.orders || 0, // si backend no lo tiene, dejamos 0
+          ticket_medio: res.data.turnover && res.data.orders
+            ? res.data.turnover / res.data.orders
+            : 0,
+          margen: res.data.margin // mantenemos el % para futuras métricas
+        });
       })
       .catch(err => console.error("❌ Error cargando KPIs:", err));
   }, []);
@@ -18,7 +27,7 @@ export default function Dashboard() {
   if (!kpis) return <p className="p-4">Cargando KPIs...</p>;
 
   const data = [
-    { name: "Turnover", value: kpis.ventas_totales },
+    { name: "Ventas Totales", value: kpis.ventas_totales },
     { name: "Ticket Medio", value: kpis.ticket_medio }
   ];
 

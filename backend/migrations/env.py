@@ -9,9 +9,10 @@ load_dotenv()
 
 # Alembic config
 config = context.config
-db_url = os.getenv("DB_URL")
+db_url = os.getenv("DATABASE_URL")  # 👈 mantener coherencia con .env
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
+
 
 # Logging
 if config.config_file_name is not None:

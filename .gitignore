@@ -22,12 +22,15 @@ __pycache__/
 
 # Virtual envs
 venv/
-.env/
+env/
+.env
 .env.local
 .env.*.local
 
 # Alembic migrations cache
 backend/migrations/versions/*.pyc
+# ⚠️ Mantenemos los archivos .py de migrations en Git
+# solo ignoramos los .pyc
 
 # ========================
 # OS / IDE / Editor
