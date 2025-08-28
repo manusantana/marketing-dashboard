@@ -1,12 +1,17 @@
 # backend/core/config.py
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+psycopg://app:app@db:5432/marketing"  # URL por defecto para docker
-    BACKEND_CORS_ORIGINS: str = "http://localhost:5173"  # Vite dev server
-    APP_NAME: str = "Marketing Dashboard"
+    # ⚡ Cargamos siempre desde variables de entorno o archivo .env
+    DATABASE_URL: str  # Obligatorio → definido en .env
+    BACKEND_CORS_ORIGINS: str = "http://localhost:5173"  # Default seguro
+    APP_NAME: str = "Marketing Dashboard"  # No sensible, puede tener default
+    DEBUG: bool = True  # Para desactivar logs en producción
 
     class Config:
-        env_file = ".env"  # permite override desde .env
+        env_file = ".env"   # Permite override desde .env
+        case_sensitive = True
+
 
 settings = Settings()

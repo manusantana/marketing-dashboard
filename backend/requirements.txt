@@ -7,3 +7,5 @@ python-multipart
 alembic
 python-dotenv
 openpyxl
+pydantic-settings
+psycopg[binary]
