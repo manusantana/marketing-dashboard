@@ -56,3 +56,4 @@ Thumbs.db
 postgres_data/
 uploads/
 files/
+.DS_Store
