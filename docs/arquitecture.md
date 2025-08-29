@@ -300,3 +300,25 @@ export default function Dashboard() {
 
 > Mantén este documento en `docs/arquitectura.md` y actualízalo con cada cambio estructural.
 
+## 11) Consultas rápidas de SQL
+-- Últimos batches
+SELECT batch_id, filename, mode, rows, created_at
+FROM upload_history
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Conteo de filas por batch en sales
+SELECT batch_id, COUNT(*) AS rows, SUM(amount) AS turnover, SUM(margin) AS margin
+FROM sales
+GROUP BY batch_id
+
+ORDER BY rows DESC;
+
+-- Comprobar solo el último batch
+WITH last AS (
+  SELECT batch_id FROM upload_history ORDER BY created_at DESC LIMIT 1
+)
+SELECT s.batch_id, COUNT(*) AS rows, SUM(s.amount), SUM(s.margin)
+FROM sales s JOIN last l USING (batch_id)
+GROUP BY s.batch_id;
+

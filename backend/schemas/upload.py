@@ -6,4 +6,5 @@ class UploadResponse(BaseModel):
     message: str
     rows: Optional[int] = None
     columns: Optional[List[str]] = None
-    sample: Optional[List[Dict]] = None
+    sample: Optional[List[Dict[str, Any]]] = None  # <- tipado explícito
+    batch_id: Optional[str] = None   # ← nuevo
