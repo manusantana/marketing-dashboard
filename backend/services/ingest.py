@@ -108,7 +108,10 @@ def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
         eur = _coerce_money(df["margin_raw"])
         # heurística: si hay más valores válidos como % que como €, usamos %
         use_pct = pct.notna().sum() >= eur.notna().sum()
-        df["margin_eur"] = (df["amount"] * pct).where(use_pct, eur).fillna(0.0)
+        if use_pct:
+            df["margin_eur"] = (df["amount"] * pct).fillna(0.0)
+        else:
+            df["margin_eur"] = eur.fillna(0.0)
     else:
         df["margin_eur"] = 0.0
 
