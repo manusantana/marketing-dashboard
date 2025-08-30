@@ -8,4 +8,5 @@ class UploadResponse(BaseModel):
     rows: Optional[int] = None
     columns: Optional[List[str]] = None
     sample: Optional[List[Dict]] = None
+
     batch_id: Optional[int] = None

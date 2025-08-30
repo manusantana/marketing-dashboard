@@ -18,9 +18,31 @@ def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={k: v for k, v in mapping.items() if k in df.columns})
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+
     for col in ("amount", "margin"):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
+
+
+    if "amount" in df.columns:
+        df["amount"] = _coerce_money(df["amount"]).fillna(0.0)
+
+    # margen en €:
+    # - si margin_raw parece porcentaje (contiene % o <= 1/<=100), calcula sobre amount
+    # - si margin_raw parece monetario, úsalo
+    if "margin_raw" in df.columns:
+        pct = _coerce_percent(df["margin_raw"])
+        eur = _coerce_money(df["margin_raw"])
+        # heurística: si hay más valores válidos como % que como €, usamos %
+        use_pct = pct.notna().sum() >= eur.notna().sum()
+        df["margin_eur"] = (df["amount"] * pct).where(use_pct, eur).fillna(0.0)
+    else:
+        df["margin_eur"] = 0.0
+
+    if "discount_raw" in df.columns:
+        df["discount_pct"] = _coerce_percent(df["discount_raw"]).fillna(0.0)
+
+
     if "quantity" in df.columns:
         df["quantity"] = (
             pd.to_numeric(df["quantity"], errors="coerce").fillna(0).astype(int)
@@ -28,9 +50,9 @@ def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _bulk_upsert_sales(
-    df: pd.DataFrame, db: Session, batch_id: int, mode: str = "append"
-):
+
+def _bulk_upsert_sales(df: pd.DataFrame, db: Session, batch_id: int, mode: str = "add"):
+
     """Insert sales in bulk assigning them to a batch."""
     # Inserción simple (MVP). Si luego quieres upsert real, lo cambiamos.
     if mode == "replace":
@@ -53,14 +75,18 @@ def _bulk_upsert_sales(
     db.commit()
 
 
+
 def load_sales_from_excel(path: Path, db: Session, batch_id: int, mode: str = "append"):
+
     df = pd.read_excel(path)
     df = _normalize_df(df)
     _bulk_upsert_sales(df, db, batch_id, mode)
     return df
 
 
+
 def load_sales_from_csv(path: Path, db: Session, batch_id: int, mode: str = "append"):
+
     df = pd.read_csv(path)
     df = _normalize_df(df)
     _bulk_upsert_sales(df, db, batch_id, mode)

@@ -19,11 +19,13 @@ MAX_MB = 15  # límite opcional
 @router.post("/", response_model=UploadResponse)
 async def upload_file(
     request: Request,
-    mode: str = "append",
+
+    mode: str = "append", "add",
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
     """Handle file uploads for sales data."""
+
     if mode not in {"append", "replace"}:
         raise HTTPException(status_code=400, detail="Modo inválido")
 
@@ -69,6 +71,7 @@ async def upload_file(
         rows=len(df),
         columns=list(df.columns),
         sample=sample,
+        codex/revise-all-code-for-issues-w8x42r
         batch_id=batch.id,
     )
 
