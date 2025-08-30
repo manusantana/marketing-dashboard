@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import tempfile, shutil
 from pathlib import Path
 from db.session import get_db
+from db.models import Batch, Sale
 from services.ingest import load_sales_from_excel, load_sales_from_csv
 from schemas.upload import UploadResponse
 
@@ -37,11 +38,17 @@ async def upload_file(
         shutil.copyfileobj(file.file, tmp)
         tmp_path = Path(tmp.name)
 
+    # 3b) Crear un nuevo batch
+    batch = Batch()
+    db.add(batch)
+    db.commit()
+    db.refresh(batch)
+
     try:
         if ext in {".xlsx", ".xls"}:
-            df = load_sales_from_excel(tmp_path, db, mode)
+            df = load_sales_from_excel(tmp_path, db, batch.id, mode)
         else:  # ".csv"
-            df = load_sales_from_csv(tmp_path, db, mode)
+            df = load_sales_from_csv(tmp_path, db, batch.id, mode)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error procesando archivo: {e}")
     finally:
@@ -59,3 +66,16 @@ async def upload_file(
         columns=list(df.columns),
         sample=sample,
     )
+
+
+@router.delete("/undo")
+def undo_last_upload(db: Session = Depends(get_db)):
+    batch = db.query(Batch).order_by(Batch.created_at.desc()).first()
+    if not batch:
+        raise HTTPException(status_code=404, detail="No hay batches previos para deshacer")
+
+    db.query(Sale).filter(Sale.batch_id == batch.id).delete()
+    db.delete(batch)
+    db.commit()
+
+    return {"status": "ok", "message": "Último batch eliminado"}

@@ -21,7 +21,10 @@ def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
         df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0).astype(int)
     return df
 
-def _bulk_upsert_sales(df: pd.DataFrame, db: Session, mode: str = "add"):
+def _bulk_upsert_sales(
+    df: pd.DataFrame, db: Session, batch_id: int, mode: str = "add"
+):
+    """Insert sales in bulk assigning them to a batch."""
     # Inserción simple (MVP). Si luego quieres upsert real, lo cambiamos.
     if mode == "replace":
         db.query(Sale).delete()
@@ -36,19 +39,26 @@ def _bulk_upsert_sales(df: pd.DataFrame, db: Session, mode: str = "add"):
             amount=float(r.get("amount", 0) or 0),
             margin=float(r.get("margin", 0) or 0),
             quantity=int(r.get("quantity", 0) or 0),
+            batch_id=batch_id,
         )
         records.append(s)
     db.add_all(records)
     db.commit()
 
-def load_sales_from_excel(path: Path, db: Session, mode: str = "add"):
+
+def load_sales_from_excel(
+    path: Path, db: Session, batch_id: int, mode: str = "add"
+):
     df = pd.read_excel(path)
     df = _normalize_df(df)
-    _bulk_upsert_sales(df, db, mode)
+    _bulk_upsert_sales(df, db, batch_id, mode)
     return df
 
-def load_sales_from_csv(path: Path, db: Session, mode: str = "add"):
+
+def load_sales_from_csv(
+    path: Path, db: Session, batch_id: int, mode: str = "add"
+):
     df = pd.read_csv(path)
     df = _normalize_df(df)
-    _bulk_upsert_sales(df, db, mode)
+    _bulk_upsert_sales(df, db, batch_id, mode)
     return df
