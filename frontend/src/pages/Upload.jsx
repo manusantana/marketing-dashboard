@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
+  const [mode, setMode] = useState("add");
   const [status, setStatus] = useState("");
 
   const handleUpload = async () => {
@@ -12,7 +13,7 @@ export default function Upload() {
 
     try {
       setStatus("Subiendo...");
-      const res = await fetch("http://localhost:8000/upload", {
+      const res = await fetch(`http://localhost:8000/upload?mode=${mode}`, {
         method: "POST",
         body: formData,   // 👈 no pongas headers, el navegador los añade
       });
@@ -32,14 +33,23 @@ export default function Upload() {
 
       <input
         type="file"
-        accept=".xlsx"
+        accept=".xlsx,.csv"
         onChange={(e) => setFile(e.target.files[0])}
-        className="mb-4"
+        className="mb-4 block"
       />
+
+      <select
+        value={mode}
+        onChange={(e) => setMode(e.target.value)}
+        className="mb-4 p-2 border rounded"
+      >
+        <option value="add">Añadir Datos</option>
+        <option value="replace">Reemplazar Datos</option>
+      </select>
 
       <button
         onClick={handleUpload}
-        className="px-4 py-2 bg-indigo-600 text-white rounded"
+        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
       >
         Subir
       </button>
