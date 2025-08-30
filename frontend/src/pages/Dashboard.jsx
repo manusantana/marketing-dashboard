@@ -1,8 +1,16 @@
 // frontend/src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
 import client from "../api/client";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import Upload from "../components/Upload"; // ← ruta corregida
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import Upload from "../components/Upload.jsx";
 
 export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
