@@ -4,6 +4,8 @@ export default function Upload() {
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState("add");
   const [status, setStatus] = useState("");
+  const [mode, setMode] = useState("append");
+  const [lastBatchId, setLastBatchId] = useState(null);
 
   const handleUpload = async () => {
     if (!file) return;
@@ -14,15 +16,33 @@ export default function Upload() {
     try {
       setStatus("Subiendo...");
       const res = await fetch(`http://localhost:8000/upload?mode=${mode}`, {
+      const res = await fetch(`http://localhost:8000/upload?mode=${mode}`, {
         method: "POST",
-        body: formData,   // 👈 no pongas headers, el navegador los añade
+        body: formData, // 👈 no pongas headers, el navegador los añade
       });
 
       if (!res.ok) throw new Error("Error en la subida");
       const data = await res.json();
       setStatus("✅ " + data.message);
+      setLastBatchId(data.batch_id);
     } catch (err) {
       setStatus("❌ Error subiendo archivo");
+      console.error(err);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!lastBatchId) return;
+    try {
+      setStatus("Deshaciendo último upload...");
+      const res = await fetch(`http://localhost:8000/upload/${lastBatchId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Error deshaciendo upload");
+      setStatus("✅ Último upload revertido");
+      setLastBatchId(null);
+    } catch (err) {
+      setStatus("❌ Error deshaciendo upload");
       console.error(err);
     }
   };

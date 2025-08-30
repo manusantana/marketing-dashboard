@@ -1,3 +1,4 @@
+// frontend/src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
 import client from "../api/client";
 import {
@@ -15,34 +16,36 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
 
   useEffect(() => {
-    console.log("🚀 Pidiendo KPIs...");
-    client.get("/kpis/basic")
-      .then(res => {
-        console.log("📊 KPIs recibidos:", res.data);
-
-        // 🔹 Mapeamos lo que devuelve el backend
+    const fetchKpis = async () => {
+      try {
+        const res = await client.get("/kpis/basic");
         setKpis({
-          ventas_totales: res.data.turnover, // antes turnover
-          num_pedidos: res.data.orders || 0, // si backend no lo tiene, dejamos 0
-          ticket_medio: res.data.turnover && res.data.orders
-            ? res.data.turnover / res.data.orders
-            : 0,
-          margen: res.data.margin // mantenemos el % para futuras métricas
+          ventas_totales: res.data.turnover ?? 0,
+          num_pedidos: res.data.orders ?? 0,
+          ticket_medio:
+            res.data.turnover && res.data.orders
+              ? res.data.turnover / res.data.orders
+              : 0,
+          margen: res.data.margin ?? 0,
         });
-      })
-      .catch(err => console.error("❌ Error cargando KPIs:", err));
+      } catch (err) {
+        console.error("❌ Error cargando KPIs:", err);
+      }
+    };
+    fetchKpis();
   }, []);
 
   if (!kpis) return <p className="p-4">Cargando KPIs...</p>;
 
   const data = [
     { name: "Ventas Totales", value: kpis.ventas_totales },
-    { name: "Ticket Medio", value: kpis.ticket_medio }
+    { name: "Ticket Medio", value: kpis.ticket_medio },
   ];
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">KPIs Básicos</h2>
+    <div className="p-6 space-y-10">
+      <section>
+        <h2 className="text-2xl font-bold mb-6">KPIs Básicos</h2>
 
       {/* 🔹 Fila de indicadores */}
       <div className="overflow-x-auto mb-8">
