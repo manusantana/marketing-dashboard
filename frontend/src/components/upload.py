@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState({ type: "", text: "" });
   const [history, setHistory] = useState([]);
 
   const handleFileChange = (e) => {
@@ -15,13 +15,23 @@ export default function Upload() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(`http://localhost:8000/upload/?mode=${mode}`, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    setMessage(data.message + " (batch_id: " + data.batch_id + ")");
-    fetchHistory(); // refresca historial
+    try {
+      const res = await fetch(`http://localhost:8000/upload/?mode=${mode}`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      setStatus({
+        type: "success",
+        text: `${data.message} (batch_id: ${data.batch_id})`,
+      });
+      fetchHistory(); // refresca historial
+    } catch (err) {
+      console.error(err);
+      setStatus({ type: "error", text: "No se pudo subir el archivo" });
+    }
+
+    setTimeout(() => setStatus({ type: "", text: "" }), 3000);
   };
 
   const fetchHistory = async () => {
@@ -31,9 +41,22 @@ export default function Upload() {
   };
 
   const handleUndo = async (batchId) => {
-    await fetch(`http://localhost:8000/upload/${batchId}`, { method: "DELETE" });
-    setMessage(`Batch ${batchId} eliminado correctamente`);
-    fetchHistory();
+    try {
+      await fetch(`http://localhost:8000/upload/${batchId}`, { method: "DELETE" });
+      setStatus({
+        type: "success",
+        text: `Batch ${batchId} eliminado correctamente`,
+      });
+      fetchHistory();
+    } catch (err) {
+      console.error(err);
+      setStatus({
+        type: "error",
+        text: "No se pudo deshacer la subida",
+      });
+    }
+
+    setTimeout(() => setStatus({ type: "", text: "" }), 3000);
   };
 
   return (
@@ -54,7 +77,11 @@ export default function Upload() {
           Subir (Replace)
         </button>
       </div>
-      {message && <p className="mb-4 text-green-600">{message}</p>}
+      {status.text && (
+        <p className={status.type === "success" ? "text-green-600" : "text-red-600"}>
+          {status.text}
+        </p>
+      )}
 
       <h3 className="text-lg font-semibold mt-6 mb-2">Historial de uploads</h3>
       <button
