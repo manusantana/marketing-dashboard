@@ -1,129 +1,88 @@
 # backend/api/upload.py
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-import shutil
 import tempfile
+import shutil
 from pathlib import Path
-from typing import List, Literal
-import uuid
-
 from db.session import get_db
-from db.models import Sale, UploadHistory
-from services.ingest import (
-    parse_sales_from_excel,
-    parse_sales_from_csv,
-    bulk_insert_sales,
-)
-from schemas.upload import UploadHistoryItem, UploadResponse
+from db.models import Batch, Sale
+from services.ingest import load_sales_from_excel, load_sales_from_csv
+from schemas.upload import UploadResponse
 
+# ⬇️ Prefijo aquí, NO en main.py
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
 ALLOWED_EXTS = {".xlsx", ".xls", ".csv"}
-MAX_MB = 15
+MAX_MB = 15  # límite opcional
 
 
 @router.post("/", response_model=UploadResponse)
 async def upload_file(
     request: Request,
+    mode: str = "add",
     file: UploadFile = File(...),
-    mode: Literal["append", "replace"] = "append",
     db: Session = Depends(get_db),
 ):
-    # --- Validaciones básicas ---
+    """Handle file uploads for sales data."""
+    if mode not in {"add", "replace"}:
+        raise HTTPException(status_code=400, detail="Modo inválido")
+
+    # 1) Validación de tamaño (si el header viene)
     cl = request.headers.get("content-length")
     if cl and int(cl) > MAX_MB * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"Archivo > {MAX_MB}MB")
 
+    # 2) Validación de extensión
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTS:
         raise HTTPException(status_code=400, detail="Extensión no permitida")
 
-    # --- Persistencia temporal ---
+    # 3) Guardar temporal y parsear
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = Path(tmp.name)
 
+    # 3b) Crear un nuevo batch
+    batch = Batch()
+    db.add(batch)
+    db.commit()
+    db.refresh(batch)
+
     try:
-        # ========= PARSEO (termina aquí) =========
         if ext in {".xlsx", ".xls"}:
-            df = parse_sales_from_excel(tmp_path)
-        else:
-            df = parse_sales_from_csv(tmp_path)
-        # ========= FIN PARSEO =========
-    except Exception as e:
+            df = load_sales_from_excel(tmp_path, db, batch.id, mode)
+        else:  # ".csv"
+            df = load_sales_from_csv(tmp_path, db, batch.id, mode)
+    except Exception as e:  # pragma: no cover - just to surface error
         raise HTTPException(status_code=400, detail=f"Error procesando archivo: {e}")
     finally:
         try:
             tmp_path.unlink(missing_ok=True)
-        except Exception:
+        except FileNotFoundError:
             pass
 
-    # --- Transacción atómica (empieza aquí) ---
-    batch_id = str(uuid.uuid4())
-    try:
-        with db.begin():
-            if mode == "replace":
-                db.query(Sale).delete()
-            bulk_insert_sales(df, db, batch_id=batch_id)  # sin commit interno
-            db.add(
-                UploadHistory(
-                    batch_id=batch_id,
-                    filename=file.filename,
-                    mode=mode,
-                    rows=len(df),
-                )
-            )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Ingest fallido ({mode}): {e}")
-    # --- Fin Transacción ---
-
-    # --- Respuesta UI ---
+    # 4) Respuesta tipada para la UI
     sample = df.head(5).to_dict(orient="records")
-    action = "reemplazo" if mode == "replace" else "append"
     return UploadResponse(
         status="ok",
-        message=f"Datos cargados correctamente ({action}).",
+        message="Datos cargados correctamente",
         rows=len(df),
         columns=list(df.columns),
         sample=sample,
-        batch_id=batch_id,
     )
 
 
-@router.get("/history", response_model=List[UploadHistoryItem])
-def upload_history(db: Session = Depends(get_db)):
-    """Return the history of uploaded batches."""
-
-    try:
-        rows = db.query(UploadHistory).order_by(UploadHistory.created_at.desc()).all()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching history: {e}")
-
-    return [
-        UploadHistoryItem(
-            batch_id=r.batch_id,
-            filename=r.filename,
-            mode=r.mode,
-            rows=r.rows,
-            created_at=r.created_at,
+@router.delete("/undo")
+def undo_last_upload(db: Session = Depends(get_db)):
+    """Remove last uploaded batch."""
+    batch = db.query(Batch).order_by(Batch.created_at.desc()).first()
+    if not batch:
+        raise HTTPException(
+            status_code=404, detail="No hay batches previos para deshacer"
         )
-        for r in rows
-    ]
 
+    db.query(Sale).filter(Sale.batch_id == batch.id).delete()
+    db.delete(batch)
+    db.commit()
 
-@router.delete("/{batch_id}")
-def delete_upload(batch_id: str, db: Session = Depends(get_db)):
-    """Remove sales and history for a specific batch."""
-
-    history = db.query(UploadHistory).filter(UploadHistory.batch_id == batch_id).first()
-    if not history:
-        raise HTTPException(status_code=404, detail="Batch not found")
-
-    try:
-        with db.begin():
-            db.query(Sale).filter(Sale.batch_id == batch_id).delete()
-            db.delete(history)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting batch: {e}")
-
-    return {"status": "ok"}
+    return {"status": "ok", "message": "Último batch eliminado"}
