@@ -1,22 +1,26 @@
 # backend/api/upload.py
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-import tempfile, shutil
+import shutil
+import tempfile
 from pathlib import Path
-from typing import Literal
+from typing import List, Literal
 import uuid
 
 from db.session import get_db
 from db.models import Sale, UploadHistory
 from services.ingest import (
-    parse_sales_from_excel, parse_sales_from_csv, bulk_insert_sales
+    parse_sales_from_excel,
+    parse_sales_from_csv,
+    bulk_insert_sales,
 )
-from schemas.upload import UploadResponse
+from schemas.upload import UploadHistoryItem, UploadResponse
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
 ALLOWED_EXTS = {".xlsx", ".xls", ".csv"}
 MAX_MB = 15
+
 
 @router.post("/", response_model=UploadResponse)
 async def upload_file(
@@ -49,8 +53,10 @@ async def upload_file(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error procesando archivo: {e}")
     finally:
-        try: tmp_path.unlink(missing_ok=True)
-        except: pass
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
 
     # --- Transacción atómica (empieza aquí) ---
     batch_id = str(uuid.uuid4())
@@ -59,12 +65,14 @@ async def upload_file(
             if mode == "replace":
                 db.query(Sale).delete()
             bulk_insert_sales(df, db, batch_id=batch_id)  # sin commit interno
-            db.add(UploadHistory(
-                batch_id=batch_id,
-                filename=file.filename,
-                mode=mode,
-                rows=len(df),
-            ))
+            db.add(
+                UploadHistory(
+                    batch_id=batch_id,
+                    filename=file.filename,
+                    mode=mode,
+                    rows=len(df),
+                )
+            )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Ingest fallido ({mode}): {e}")
     # --- Fin Transacción ---
@@ -80,3 +88,42 @@ async def upload_file(
         sample=sample,
         batch_id=batch_id,
     )
+
+
+@router.get("/history", response_model=List[UploadHistoryItem])
+def upload_history(db: Session = Depends(get_db)):
+    """Return the history of uploaded batches."""
+
+    try:
+        rows = db.query(UploadHistory).order_by(UploadHistory.created_at.desc()).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching history: {e}")
+
+    return [
+        UploadHistoryItem(
+            batch_id=r.batch_id,
+            filename=r.filename,
+            mode=r.mode,
+            rows=r.rows,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+@router.delete("/{batch_id}")
+def delete_upload(batch_id: str, db: Session = Depends(get_db)):
+    """Remove sales and history for a specific batch."""
+
+    history = db.query(UploadHistory).filter(UploadHistory.batch_id == batch_id).first()
+    if not history:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    try:
+        with db.begin():
+            db.query(Sale).filter(Sale.batch_id == batch_id).delete()
+            db.delete(history)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting batch: {e}")
+
+    return {"status": "ok"}
