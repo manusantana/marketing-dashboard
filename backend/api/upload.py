@@ -16,9 +16,12 @@ MAX_MB = 15  # límite opcional
 @router.post("/", response_model=UploadResponse)
 async def upload_file(
     request: Request,
+    mode: str = "add",
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
+    if mode not in {"add", "replace"}:
+        raise HTTPException(status_code=400, detail="Modo inválido")
     # 1) Validación de tamaño (si el header viene)
     cl = request.headers.get("content-length")
     if cl and int(cl) > MAX_MB * 1024 * 1024:
@@ -36,9 +39,9 @@ async def upload_file(
 
     try:
         if ext in {".xlsx", ".xls"}:
-            df = load_sales_from_excel(tmp_path, db)
+            df = load_sales_from_excel(tmp_path, db, mode)
         else:  # ".csv"
-            df = load_sales_from_csv(tmp_path, db)
+            df = load_sales_from_csv(tmp_path, db, mode)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error procesando archivo: {e}")
     finally:

@@ -21,8 +21,12 @@ def _normalize_df(df: pd.DataFrame) -> pd.DataFrame:
         df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0).astype(int)
     return df
 
-def _bulk_upsert_sales(df: pd.DataFrame, db: Session):
+def _bulk_upsert_sales(df: pd.DataFrame, db: Session, mode: str = "add"):
     # Inserción simple (MVP). Si luego quieres upsert real, lo cambiamos.
+    if mode == "replace":
+        db.query(Sale).delete()
+        db.commit()
+
     records = []
     for _, r in df.iterrows():
         s = Sale(
@@ -37,14 +41,14 @@ def _bulk_upsert_sales(df: pd.DataFrame, db: Session):
     db.add_all(records)
     db.commit()
 
-def load_sales_from_excel(path: Path, db: Session):
+def load_sales_from_excel(path: Path, db: Session, mode: str = "add"):
     df = pd.read_excel(path)
     df = _normalize_df(df)
-    _bulk_upsert_sales(df, db)
+    _bulk_upsert_sales(df, db, mode)
     return df
 
-def load_sales_from_csv(path: Path, db: Session):
+def load_sales_from_csv(path: Path, db: Session, mode: str = "add"):
     df = pd.read_csv(path)
     df = _normalize_df(df)
-    _bulk_upsert_sales(df, db)
+    _bulk_upsert_sales(df, db, mode)
     return df
