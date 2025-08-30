@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
+import Upload from "../components/Upload.jsx";
 
 export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
@@ -47,38 +48,48 @@ export default function Dashboard() {
       <section>
         <h2 className="text-2xl font-bold mb-6">KPIs Básicos</h2>
 
-      {/* 🔹 Fila de indicadores */}
-      <div className="overflow-x-auto mb-8">
-        <table className="min-w-full text-center">
-          <thead className="bg-indigo-100">
-            <tr>
-              <th className="p-2">Ventas Totales</th>
-              <th className="p-2">Nº Pedidos</th>
-              <th className="p-2">Ticket Medio</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="p-2">€ {kpis.ventas_totales.toLocaleString()}</td>
-              <td className="p-2">{kpis.num_pedidos}</td>
-              <td className="p-2">€ {kpis.ticket_medio.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        {/* 🔹 Fila de indicadores */}
+        <div className="overflow-x-auto mb-8">
+          <table className="min-w-full text-center">
+            <thead className="bg-indigo-100">
+              <tr>
+                <th className="p-2">Ventas Totales</th>
+                <th className="p-2">Nº Pedidos</th>
+                <th className="p-2">Ticket Medio</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="p-2">
+                  € {kpis.ventas_totales.toLocaleString()}
+                </td>
+                <td className="p-2">{kpis.num_pedidos}</td>
+                <td className="p-2">€ {kpis.ticket_medio.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      {/* 🔹 Gráfico */}
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="value" fill="#6366F1">
-            <LabelList dataKey="value" position="top" />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+        {/* 🔹 Gráfico */}
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data}>
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="value" fill="#6366F1">
+              <LabelList dataKey="value" position="top" />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4">Carga de datos</h2>
+        <div className="bg-white shadow rounded-xl p-4">
+          <Upload />
+        </div>
+      </section>
     </div>
   );
 }
