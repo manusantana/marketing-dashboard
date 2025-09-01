@@ -7,6 +7,7 @@ from .models import Sale
 # Crear schema si no existe
 Base.metadata.create_all(bind=engine)
 
+
 def seed_sales(db: Session, n=100):
     products = ["Producto A", "Producto B", "Producto C", "Producto D"]
     customers = ["Cliente X", "Cliente Y", "Cliente Z", "Cliente W"]
@@ -15,15 +16,20 @@ def seed_sales(db: Session, n=100):
         product = random.choice(products)
         customer = random.choice(customers)
         date = datetime.today() - timedelta(days=random.randint(0, 180))
-        revenue = round(random.uniform(50, 500), 2)
-        cost = round(revenue * random.uniform(0.3, 0.7), 2)
+        amount = round(random.uniform(50, 500), 2)
+        margin = round(random.uniform(0.1, 0.4), 2)  # porcentaje
+        discount = round(random.uniform(0, 0.2), 2)  # porcentaje
+        quantity = random.randint(1, 5)
 
         sale = Sale(
             product=product,
             customer=customer,
             date=date.date(),
-            revenue=revenue,
-            cost=cost,
+            amount=amount,
+            margin=margin,
+            discount=discount,
+            quantity=quantity,
+            batch_id="seed",
         )
         db.add(sale)
 
