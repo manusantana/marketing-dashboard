@@ -14,11 +14,9 @@ export default function Dashboard() {
         setKpis({
           ventas_totales: res.data.turnover ?? 0,
           num_pedidos: res.data.orders ?? 0,
-          ticket_medio:
-            res.data.turnover && res.data.orders
-              ? res.data.turnover / res.data.orders
-              : 0,
+          ticket_medio: res.data.ticket_average ?? 0,
           margen: res.data.margin ?? 0,
+          descuento: res.data.discount ?? 0,
         });
       } catch (err) {
         console.error("❌ Error cargando KPIs:", err);
@@ -43,8 +41,13 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
             <p className="text-gray-500">Ventas Totales</p>
-            <h3 className="text-2xl font-bold text-primary">
-              € {kpis.ventas_totales.toLocaleString()}
+
+            <h3 className="text-2xl font-bold text-indigo-600">
+              €
+              {kpis.ventas_totales.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </h3>
           </div>
           <div className="card text-center">
@@ -57,6 +60,18 @@ export default function Dashboard() {
             <p className="text-gray-500">Ticket Medio</p>
             <h3 className="text-2xl font-bold text-primary">
               € {kpis.ticket_medio.toFixed(2)}
+            </h3>
+          </div>
+          <div className="bg-white shadow rounded-xl p-4 text-center">
+            <p className="text-gray-500">Margen</p>
+            <h3 className="text-2xl font-bold text-indigo-600">
+              € {kpis.margen.toFixed(2)}
+            </h3>
+          </div>
+          <div className="bg-white shadow rounded-xl p-4 text-center">
+            <p className="text-gray-500">Descuento</p>
+            <h3 className="text-2xl font-bold text-indigo-600">
+              € {kpis.descuento.toFixed(2)}
             </h3>
           </div>
         </div>
