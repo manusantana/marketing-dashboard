@@ -19,10 +19,12 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "sales",
-        sa.Column("discount", sa.Float(), nullable=False, server_default="0"),
+
+        sa.Column("discount", sa.Float(), nullable=False, server_default=sa.text("0")),
     )
     # remove server default now that existing rows are populated
-    op.alter_column("sales", "discount", server_default=None)
+    op.alter_column("sales", "discount", server_default=None, existing_type=sa.Float())
+
 
 
 def downgrade() -> None:
