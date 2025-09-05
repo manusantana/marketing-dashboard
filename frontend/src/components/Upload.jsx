@@ -1,7 +1,7 @@
 // frontend/src/components/Upload.jsx
 import React, { useState } from "react";
 
-export default function Upload() {
+export default function Upload({ onRefresh }) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState({ type: "", text: "" });
   const [history, setHistory] = useState([]);
@@ -25,7 +25,7 @@ export default function Upload() {
         type: "success",
         text: `${data.message} (batch_id: ${data.batch_id})`,
       });
-      fetchHistory();
+      refreshAll();
     } catch (err) {
       console.error(err);
       setStatus({ type: "error", text: "No se pudo subir el archivo" });
@@ -42,12 +42,14 @@ export default function Upload() {
 
   const handleUndo = async (batchId) => {
     try {
-      await fetch(`http://localhost:8000/upload/${batchId}`, { method: "DELETE" });
+      await fetch(`http://localhost:8000/upload/${batchId}`, {
+        method: "DELETE",
+      });
       setStatus({
         type: "success",
         text: `Batch ${batchId} eliminado correctamente`,
       });
-      fetchHistory();
+      refreshAll();
     } catch (err) {
       console.error(err);
       setStatus({
@@ -57,6 +59,11 @@ export default function Upload() {
     }
 
     setTimeout(() => setStatus({ type: "", text: "" }), 3000);
+  };
+
+  const refreshAll = () => {
+    fetchHistory();
+    onRefresh?.();
   };
 
   return (
@@ -72,13 +79,17 @@ export default function Upload() {
         </button>
       </div>
       {status.text && (
-        <p className={status.type === "success" ? "text-green-600" : "text-red-600"}>
+        <p
+          className={
+            status.type === "success" ? "text-green-600" : "text-red-600"
+          }
+        >
           {status.text}
         </p>
       )}
 
       <h3 className="text-lg font-semibold mt-6 mb-2">Historial de uploads</h3>
-      <button onClick={fetchHistory} className="btn-secondary mb-2">
+      <button onClick={refreshAll} className="btn-secondary mb-2">
         Refrescar
       </button>
       <table className="table">
