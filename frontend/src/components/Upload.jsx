@@ -1,7 +1,7 @@
 // frontend/src/components/Upload.jsx
 import React, { useState } from "react";
 
-export default function Upload() {
+export default function Upload({ onRefresh }) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState({ type: "", text: "" });
   const [history, setHistory] = useState([]);
@@ -25,7 +25,7 @@ export default function Upload() {
         type: "success",
         text: `${data.message} (batch_id: ${data.batch_id})`,
       });
-      fetchHistory(); // refresca historial
+      refreshAll();
     } catch (err) {
       console.error(err);
       setStatus({ type: "error", text: "No se pudo subir el archivo" });
@@ -42,12 +42,14 @@ export default function Upload() {
 
   const handleUndo = async (batchId) => {
     try {
-      await fetch(`http://localhost:8000/upload/${batchId}`, { method: "DELETE" });
+      await fetch(`http://localhost:8000/upload/${batchId}`, {
+        method: "DELETE",
+      });
       setStatus({
         type: "success",
         text: `Batch ${batchId} eliminado correctamente`,
       });
-      fetchHistory();
+      refreshAll();
     } catch (err) {
       console.error(err);
       setStatus({
@@ -59,62 +61,60 @@ export default function Upload() {
     setTimeout(() => setStatus({ type: "", text: "" }), 3000);
   };
 
+  const refreshAll = () => {
+    fetchHistory();
+    onRefresh?.();
+  };
+
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Upload de archivo</h2>
       <input type="file" onChange={handleFileChange} className="mb-2" />
-      <div className="space-x-2 mb-4">
-        <button
-          onClick={() => handleUpload("append")}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
-        >
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => handleUpload("append")} className="btn-primary">
           Subir (Append)
         </button>
-        <button
-          onClick={() => handleUpload("replace")}
-          className="px-4 py-2 bg-red-500 text-white rounded"
-        >
+        <button onClick={() => handleUpload("replace")} className="btn-danger">
           Subir (Replace)
         </button>
       </div>
       {status.text && (
-        <p className={status.type === "success" ? "text-green-600" : "text-red-600"}>
+        <p
+          className={
+            status.type === "success" ? "text-green-600" : "text-red-600"
+          }
+        >
           {status.text}
         </p>
       )}
 
       <h3 className="text-lg font-semibold mt-6 mb-2">Historial de uploads</h3>
-      <button
-        onClick={fetchHistory}
-        className="mb-2 px-3 py-1 bg-gray-300 rounded"
-      >
+      <button onClick={refreshAll} className="btn-secondary mb-2">
         Refrescar
       </button>
-      <table className="table-auto border-collapse border border-gray-300 w-full text-sm">
+      <table className="table">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-2 py-1">Batch ID</th>
-            <th className="border px-2 py-1">Archivo</th>
-            <th className="border px-2 py-1">Modo</th>
-            <th className="border px-2 py-1">Filas</th>
-            <th className="border px-2 py-1">Fecha</th>
-            <th className="border px-2 py-1">Acciones</th>
+          <tr>
+            <th>Batch ID</th>
+            <th>Archivo</th>
+            <th>Modo</th>
+            <th>Filas</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {history.map((h) => (
             <tr key={h.batch_id}>
-              <td className="border px-2 py-1">{h.batch_id}</td>
-              <td className="border px-2 py-1">{h.filename}</td>
-              <td className="border px-2 py-1">{h.mode}</td>
-              <td className="border px-2 py-1">{h.rows}</td>
-              <td className="border px-2 py-1">
-                {new Date(h.created_at).toLocaleString()}
-              </td>
-              <td className="border px-2 py-1">
+              <td>{h.batch_id}</td>
+              <td>{h.filename}</td>
+              <td>{h.mode}</td>
+              <td>{h.rows}</td>
+              <td>{new Date(h.created_at).toLocaleString()}</td>
+              <td>
                 <button
                   onClick={() => handleUndo(h.batch_id)}
-                  className="px-2 py-1 bg-red-400 text-white rounded"
+                  className="btn-danger"
                 >
                   Deshacer
                 </button>

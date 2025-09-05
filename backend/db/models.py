@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Date, Float, DateTime, Enum, Ind
 from sqlalchemy.sql import func
 from db.session import Base
 
+
 class Sale(Base):
     __tablename__ = "sales"
     id = Column(Integer, primary_key=True, index=True)
@@ -10,11 +11,14 @@ class Sale(Base):
     product = Column(String, index=True, nullable=True)
     amount = Column(Float, nullable=False, default=0.0)
     margin = Column(Float, nullable=False, default=0.0)
+    discount = Column(Float, nullable=False, default=0.0)
     quantity = Column(Integer, nullable=False, default=0)
     batch_id = Column(String(36), index=True, nullable=False)  # <-- NUEVO
 
+
 # Índice útil para consultas y (si quieres) unicidad lógica
 Index("ix_sales_date_customer_product", Sale.date, Sale.customer, Sale.product)
+
 
 class UploadHistory(Base):
     __tablename__ = "upload_history"

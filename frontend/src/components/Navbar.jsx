@@ -1,10 +1,10 @@
 export default function Navbar() {
   return (
-    <nav className="bg-indigo-600 text-white p-4 flex justify-between">
+    <nav className="navbar">
       <h1 className="font-bold">📊 Marketing Analytics</h1>
-      <div className="space-x-4">
-        <a href="/" className="hover:underline">Dashboard</a>
-        <a href="/upload" className="hover:underline">Upload</a>
+      <div className="flex gap-4">
+        <a href="/" className="nav-link">Dashboard</a>
+        <a href="/upload" className="nav-link">Upload</a>
       </div>
     </nav>
   );

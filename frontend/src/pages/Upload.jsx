@@ -10,13 +10,13 @@ export default function Upload() {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("file", file); // 👈 nombre del parámetro debe ser "file"
+    formData.append("file", file);
 
     try {
       setStatus("Subiendo...");
-      const res = await fetch(`http://localhost:8000/upload?mode=${mode}`, {
+      const res = await fetch(`http://localhost:8000/upload/?mode=${mode}`, {
         method: "POST",
-        body: formData, // 👈 no pongas headers, el navegador los añade
+        body: formData,
       });
 
       if (!res.ok) throw new Error("Error en la subida");
@@ -46,45 +46,42 @@ export default function Upload() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Subir archivo Excel</h2>
+    <div className="p-6 space-y-4">
+      <h2 className="text-2xl font-bold">Subir archivo Excel</h2>
+      <div className="card space-y-4">
+        <input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={(e) => setFile(e.target.files[0])}
+          className="mb-4"
+        />
 
-      <input
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        onChange={(e) => setFile(e.target.files[0])}
-        className="mb-4"
-      />
+        <div>
+          <label className="mr-2 font-semibold">Modo:</label>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className="border rounded px-2 py-1"
+          >
+            <option value="append">Append</option>
+            <option value="replace">Replace</option>
+          </select>
+        </div>
 
-      <div className="mb-4">
-        <label className="mr-2 font-semibold">Modo:</label>
-        <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          className="border rounded px-2 py-1"
-        >
-          <option value="append">Append</option>
-          <option value="replace">Replace</option>
-        </select>
+        <div className="flex gap-2">
+          <button onClick={handleUpload} className="btn-primary">
+            Subir
+          </button>
+          <button
+            onClick={handleUndo}
+            disabled={!lastBatchId}
+            className="btn-secondary disabled:opacity-50"
+          >
+            Deshacer último upload
+          </button>
+        </div>
       </div>
-
-      <div className="space-x-2">
-        <button
-          onClick={handleUpload}
-          className="px-4 py-2 bg-indigo-600 text-white rounded"
-        >
-          Subir
-        </button>
-        <button
-          onClick={handleUndo}
-          disabled={!lastBatchId}
-          className="px-4 py-2 bg-gray-400 text-white rounded disabled:opacity-50"
-        >
-          Deshacer último upload
-        </button>
-      </div>
-
-      {status && <p className="mt-4">{status}</p>}
+      {status && <p>{status}</p>}
     </div>
   );
 }

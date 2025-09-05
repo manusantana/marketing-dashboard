@@ -169,6 +169,7 @@ def _bulk_insert_sales(df: pd.DataFrame, db: Session, batch_id: str):
                 product=r.get("product"),  # compuesto
                 amount=float(r.get("amount", 0) or 0),
                 margin=float(r.get("margin_eur", 0) or 0),  # margen en €
+                discount=float(r.get("discount_pct", 0) or 0),
                 quantity=int(r.get("quantity", 0) or 0),
                 batch_id=batch_id,
             )
@@ -179,7 +180,17 @@ def _bulk_insert_sales(df: pd.DataFrame, db: Session, batch_id: str):
 
 # ---------- API para el endpoint ----------
 def parse_sales_from_excel(path: Path) -> pd.DataFrame:
-    df = pd.read_excel(path)
+    """Parse an Excel file (``.xlsx``/``.xls``) into the normalized format.
+
+    Pandas relies on different engines depending on the extension. Older
+    ``.xls`` files require the ``xlrd`` package while modern ``.xlsx`` files use
+    ``openpyxl``. Selecting the engine explicitly avoids pandas trying the wrong
+    one and provides a clearer error message if the dependency is missing.
+    """
+
+    ext = path.suffix.lower()
+    engine = "xlrd" if ext == ".xls" else "openpyxl"
+    df = pd.read_excel(path, engine=engine)
     return _normalize_df(df)
 
 
