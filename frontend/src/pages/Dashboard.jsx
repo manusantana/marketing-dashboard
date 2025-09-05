@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Upload from "../components/Upload"; // ← ruta corregida
+import { formatNumber } from "../utils/format";
 
 export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
@@ -55,35 +56,31 @@ export default function Dashboard() {
             <p className="text-gray-500">Ventas Totales</p>
 
             <h3 className="text-2xl font-bold text-indigo-600">
-              €
-              {kpis.ventas_totales.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              €{formatNumber(kpis.ventas_totales)}
             </h3>
           </div>
           <div className="card text-center">
             <p className="text-gray-500">Nº Pedidos</p>
             <h3 className="text-2xl font-bold text-primary">
-              {kpis.num_pedidos}
+              {formatNumber(kpis.num_pedidos, 0)}
             </h3>
           </div>
           <div className="card text-center">
             <p className="text-gray-500">Ticket Medio</p>
             <h3 className="text-2xl font-bold text-primary">
-              € {kpis.ticket_medio.toFixed(2)}
+              € {formatNumber(kpis.ticket_medio)}
             </h3>
           </div>
           <div className="bg-white shadow rounded-xl p-4 text-center">
             <p className="text-gray-500">Margen</p>
             <h3 className="text-2xl font-bold text-indigo-600">
-              € {kpis.margen.toFixed(2)}
+              € {formatNumber(kpis.margen)}
             </h3>
           </div>
           <div className="bg-white shadow rounded-xl p-4 text-center">
             <p className="text-gray-500">Descuento</p>
             <h3 className="text-2xl font-bold text-indigo-600">
-              € {kpis.descuento.toFixed(2)}
+              € {formatNumber(kpis.descuento)}
             </h3>
           </div>
         </div>
@@ -92,8 +89,8 @@ export default function Dashboard() {
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
+            <YAxis tickFormatter={(value) => formatNumber(value)} />
+            <Tooltip formatter={(value) => value.toLocaleString("es-ES")} />
             <Legend />
             <Bar dataKey="value" fill="#6366F1" />
           </BarChart>
