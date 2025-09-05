@@ -39,8 +39,9 @@ export default function Dashboard() {
 
         {/* Tarjetas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white shadow rounded-xl p-4 text-center">
+          <div className="card text-center">
             <p className="text-gray-500">Ventas Totales</p>
+
             <h3 className="text-2xl font-bold text-indigo-600">
               €
               {kpis.ventas_totales.toLocaleString(undefined, {
@@ -49,15 +50,15 @@ export default function Dashboard() {
               })}
             </h3>
           </div>
-          <div className="bg-white shadow rounded-xl p-4 text-center">
+          <div className="card text-center">
             <p className="text-gray-500">Nº Pedidos</p>
-            <h3 className="text-2xl font-bold text-indigo-600">
+            <h3 className="text-2xl font-bold text-primary">
               {kpis.num_pedidos}
             </h3>
           </div>
-          <div className="bg-white shadow rounded-xl p-4 text-center">
+          <div className="card text-center">
             <p className="text-gray-500">Ticket Medio</p>
-            <h3 className="text-2xl font-bold text-indigo-600">
+            <h3 className="text-2xl font-bold text-primary">
               € {kpis.ticket_medio.toFixed(2)}
             </h3>
           </div>
@@ -90,7 +91,7 @@ export default function Dashboard() {
       {/* Sección de Upload */}
       <section>
         <h2 className="text-2xl font-bold mb-4">Carga de datos</h2>
-        <div className="bg-white shadow rounded-xl p-4">
+        <div className="card">
           <Upload />
         </div>
       </section>

@@ -9,3 +9,4 @@ python-dotenv
 openpyxl
 pydantic-settings
 psycopg[binary]
+jinja2
