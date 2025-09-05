@@ -1,34 +1,42 @@
 // frontend/src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
 import client from "../api/client";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import Upload from "../components/Upload"; // ← ruta corregida
 
 export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
   const [error, setError] = useState("");
 
+  const fetchKpis = async () => {
+    try {
+      const res = await client.get("/kpis/basic");
+      setKpis({
+        ventas_totales: res.data.turnover ?? 0,
+        num_pedidos: res.data.orders ?? 0,
+        ticket_medio: res.data.ticket_average ?? 0,
+        margen: res.data.margin ?? 0,
+        descuento: res.data.discount ?? 0,
+      });
+    } catch (err) {
+      console.error("❌ Error cargando KPIs:", err);
+      setError("No se pudieron cargar los KPIs");
+    }
+  };
+
   useEffect(() => {
-    const fetchKpis = async () => {
-      try {
-        const res = await client.get("/kpis/basic");
-        setKpis({
-          ventas_totales: res.data.turnover ?? 0,
-          num_pedidos: res.data.orders ?? 0,
-          ticket_medio: res.data.ticket_average ?? 0,
-          margen: res.data.margin ?? 0,
-          descuento: res.data.discount ?? 0,
-        });
-      } catch (err) {
-        console.error("❌ Error cargando KPIs:", err);
-        setError("No se pudieron cargar los KPIs");
-      }
-    };
     fetchKpis();
   }, []);
 
-  if (error)
-    return <p className="p-4 text-red-600">{error}</p>;
+  if (error) return <p className="p-4 text-red-600">{error}</p>;
   if (!kpis) return <p className="p-4">Cargando KPIs...</p>;
 
   const data = [
@@ -96,7 +104,7 @@ export default function Dashboard() {
       <section>
         <h2 className="text-2xl font-bold mb-4">Carga de datos</h2>
         <div className="card">
-          <Upload />
+          <Upload onRefresh={fetchKpis} />
         </div>
       </section>
     </div>

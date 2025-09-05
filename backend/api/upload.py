@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Literal
 import uuid
 
-from db.session import get_db
+from db.session import Base, get_db
 from db.models import Sale, UploadHistory
 from services.ingest import (
     parse_sales_from_excel,
@@ -59,6 +59,9 @@ async def upload_file(
             pass
 
     # --- Transacción atómica (empieza aquí) ---
+    # Garantizamos que las tablas existen (por ejemplo en SQLite sin migraciones)
+    Base.metadata.create_all(bind=db.get_bind())
+
     batch_id = str(uuid.uuid4())
     try:
         with db.begin():

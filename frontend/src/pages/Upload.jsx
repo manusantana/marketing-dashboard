@@ -14,7 +14,7 @@ export default function Upload() {
 
     try {
       setStatus("Subiendo...");
-      const res = await fetch(`http://localhost:8000/upload?mode=${mode}`, {
+      const res = await fetch(`http://localhost:8000/upload/?mode=${mode}`, {
         method: "POST",
         body: formData,
       });
