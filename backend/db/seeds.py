@@ -17,7 +17,8 @@ def seed_sales(db: Session, n=100):
         customer = random.choice(customers)
         date = datetime.today() - timedelta(days=random.randint(0, 180))
         amount = round(random.uniform(50, 500), 2)
-        margin = round(random.uniform(0.1, 0.4), 2)  # porcentaje
+        margin_pct = round(random.uniform(0.1, 0.4), 2)
+        margin = round(amount * margin_pct, 2)  # margen en €
         discount = round(random.uniform(0, 0.2), 2)  # porcentaje
         quantity = random.randint(1, 5)
 

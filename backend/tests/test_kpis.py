@@ -27,7 +27,7 @@ def test_basic_kpis(monkeypatch):
                 product="A",
                 customer="X",
                 amount=100,
-                margin=0.3,
+                margin=30,  # margen en €
                 discount=0.1,
                 quantity=1,
                 batch_id="b1",
@@ -36,7 +36,7 @@ def test_basic_kpis(monkeypatch):
                 product="B",
                 customer="Y",
                 amount=200,
-                margin=0.2,
+                margin=40,  # margen en €
                 discount=0.05,
                 quantity=2,
                 batch_id="b2",
@@ -52,7 +52,7 @@ def test_basic_kpis(monkeypatch):
     assert data["turnover"] == 300
     assert data["orders"] == 2
     assert data["ticket_average"] == 150
-    assert round(data["margin"], 2) == 100 * 0.3 + 200 * 0.2
+    assert round(data["margin"], 2) == 30 + 40
     assert round(data["discount"], 2) == 100 * 0.1 + 200 * 0.05
 
 
