@@ -6,6 +6,7 @@ import Upload from "../components/Upload"; // ← ruta corregida
 
 export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -20,11 +21,14 @@ export default function Dashboard() {
         });
       } catch (err) {
         console.error("❌ Error cargando KPIs:", err);
+        setError("No se pudieron cargar los KPIs");
       }
     };
     fetchKpis();
   }, []);
 
+  if (error)
+    return <p className="p-4 text-red-600">{error}</p>;
   if (!kpis) return <p className="p-4">Cargando KPIs...</p>;
 
   const data = [
