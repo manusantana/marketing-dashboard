@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Upload from "../components/Upload"; // ← ruta corregida
+import MarketingKpis from "../components/MarketingKpis";
 import { formatNumber } from "../utils/format";
 
 export default function Dashboard() {
@@ -96,6 +97,8 @@ export default function Dashboard() {
           </BarChart>
         </ResponsiveContainer>
       </section>
+
+      <MarketingKpis />
 
       {/* Sección de Upload */}
       <section>
