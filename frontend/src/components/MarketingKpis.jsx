@@ -21,6 +21,14 @@ export default function MarketingKpis() {
   const [error, setError] = useState("");
 
   const fetchMetrics = async () => {
+    const fallback = {
+      impressions: 10_000,
+      clicks: 500,
+      conversions: 75,
+      spend: 1_200,
+      revenue: 4_000,
+    };
+
     try {
       const res = await client.get("/kpis/marketing");
       const raw = res.data;
@@ -36,13 +44,24 @@ export default function MarketingKpis() {
       });
     } catch (err) {
       console.error("❌ Error cargando KPIs de marketing:", err);
-      setError("No se pudieron cargar los KPIs de marketing");
+      setError("Mostrando datos de ejemplo");
+      setMetrics({
+        ctr: calculateCTR(fallback.impressions, fallback.clicks),
+        cpc: calculateCPC(fallback.spend, fallback.clicks),
+        cpa: calculateCPA(fallback.spend, fallback.conversions),
+        conversion_rate: calculateConversionRate(
+          fallback.clicks,
+          fallback.conversions
+        ),
+        roas: calculateROAS(fallback.revenue, fallback.spend),
+      });
     }
   };
 
   useEffect(() => {
     fetchMetrics();
   }, []);
+
 
   if (error) return <p className="p-4 text-red-600">{error}</p>;
 
@@ -51,6 +70,7 @@ export default function MarketingKpis() {
   return (
     <section className="mt-10">
       <h2 className="text-2xl font-bold mb-6">KPIs de Marketing</h2>
+      {error && <p className="mb-4 text-yellow-600">{error}</p>}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card text-center">
           <p className="text-gray-500">CTR</p>
