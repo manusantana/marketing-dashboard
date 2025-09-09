@@ -1,7 +1,11 @@
 // frontend/src/components/MarketingKpis.jsx
-// Displays calculated digital marketing KPIs using data from the backend.
+
+// Displays calculated digital marketing KPIs using temporary mock data.
+// TODO: Replace mock data with API call once backend provides metrics.
+
 import { useEffect, useState } from "react";
 import client from "../api/client";
+
 import { formatNumber } from "../utils/format";
 import {
   calculateCTR,
@@ -11,6 +15,7 @@ import {
   calculateROAS,
 } from "../utils/marketing";
 
+import mockMarketingData from "../data/mockMarketing";
 export default function MarketingKpis() {
   const [metrics, setMetrics] = useState(null);
   const [error, setError] = useState("");
@@ -40,6 +45,7 @@ export default function MarketingKpis() {
   }, []);
 
   if (error) return <p className="p-4 text-red-600">{error}</p>;
+
   if (!metrics) return <p className="p-4">Cargando KPIs de marketing...</p>;
 
   return (
@@ -80,4 +86,3 @@ export default function MarketingKpis() {
     </section>
   );
 }
-
