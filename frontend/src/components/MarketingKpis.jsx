@@ -1,8 +1,11 @@
 // frontend/src/components/MarketingKpis.jsx
+
 // Displays calculated digital marketing KPIs using temporary mock data.
 // TODO: Replace mock data with API call once backend provides metrics.
 
 import { useEffect, useState } from "react";
+import client from "../api/client";
+
 import { formatNumber } from "../utils/format";
 import {
   calculateCTR,
@@ -11,22 +14,37 @@ import {
   calculateConversionRate,
   calculateROAS,
 } from "../utils/marketing";
-import mockMarketingData from "../data/mockMarketing";
 
+import mockMarketingData from "../data/mockMarketing";
 export default function MarketingKpis() {
   const [metrics, setMetrics] = useState(null);
+  const [error, setError] = useState("");
+
+  const fetchMetrics = async () => {
+    try {
+      const res = await client.get("/kpis/marketing");
+      const raw = res.data;
+      setMetrics({
+        ctr: calculateCTR(raw.impressions, raw.clicks),
+        cpc: calculateCPC(raw.spend, raw.clicks),
+        cpa: calculateCPA(raw.spend, raw.conversions),
+        conversion_rate: calculateConversionRate(
+          raw.clicks,
+          raw.conversions
+        ),
+        roas: calculateROAS(raw.revenue, raw.spend),
+      });
+    } catch (err) {
+      console.error("❌ Error cargando KPIs de marketing:", err);
+      setError("No se pudieron cargar los KPIs de marketing");
+    }
+  };
 
   useEffect(() => {
-    const { impressions, clicks, conversions, spend, revenue } =
-      mockMarketingData;
-    setMetrics({
-      ctr: calculateCTR(impressions, clicks),
-      cpc: calculateCPC(spend, clicks),
-      cpa: calculateCPA(spend, conversions),
-      conversion_rate: calculateConversionRate(clicks, conversions),
-      roas: calculateROAS(revenue, spend),
-    });
+    fetchMetrics();
   }, []);
+
+  if (error) return <p className="p-4 text-red-600">{error}</p>;
 
   if (!metrics) return <p className="p-4">Cargando KPIs de marketing...</p>;
 

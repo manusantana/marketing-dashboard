@@ -1,10 +1,11 @@
 // frontend/src/components/Upload.jsx
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 export default function Upload({ onRefresh }) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState({ type: "", text: "" });
   const [history, setHistory] = useState([]);
+  const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -25,7 +26,7 @@ export default function Upload({ onRefresh }) {
         type: "success",
         text: `${data.message} (batch_id: ${data.batch_id})`,
       });
-      refreshAll();
+      await refreshAll();
     } catch (err) {
       console.error(err);
       setStatus({ type: "error", text: "No se pudo subir el archivo" });
@@ -49,7 +50,9 @@ export default function Upload({ onRefresh }) {
         type: "success",
         text: `Batch ${batchId} eliminado correctamente`,
       });
-      refreshAll();
+      await refreshAll();
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       console.error(err);
       setStatus({
@@ -61,15 +64,24 @@ export default function Upload({ onRefresh }) {
     setTimeout(() => setStatus({ type: "", text: "" }), 3000);
   };
 
-  const refreshAll = () => {
-    fetchHistory();
+  const refreshAll = async () => {
+    await fetchHistory();
     onRefresh?.();
   };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Upload de archivo</h2>
-      <input type="file" onChange={handleFileChange} className="mb-2" />
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="mb-2"
+      />
       <div className="flex gap-2 mb-4">
         <button onClick={() => handleUpload("append")} className="btn-primary">
           Subir (Append)

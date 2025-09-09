@@ -15,7 +15,7 @@ def get_basic_kpis(db: Session) -> Dict[str, float]:
     """Compute core KPI values combining local sales and external sources."""
     sales = db.query(Sale).all()
     turnover_local = sum(s.amount for s in sales)
-    margin = sum(s.amount * s.margin for s in sales)
+    margin = sum(s.margin for s in sales)
     discount = sum(s.amount * s.discount for s in sales)
     orders_local = len(sales)
 
