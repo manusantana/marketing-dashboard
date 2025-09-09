@@ -18,6 +18,15 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
   const [error, setError] = useState("");
 
+  const sampleBasicKpis = () => {
+    const ventas_totales = 500_000 + Math.random() * 5_000_000;
+    const num_pedidos = Math.floor(50 + Math.random() * 500);
+    const ticket_medio = ventas_totales / num_pedidos;
+    const margen = ventas_totales * (0.1 + Math.random() * 0.2);
+    const descuento = ventas_totales * (0.05 + Math.random() * 0.15);
+    return { ventas_totales, num_pedidos, ticket_medio, margen, descuento };
+  };
+
   const fetchKpis = async () => {
     try {
       const res = await client.get("/kpis/basic");
@@ -30,7 +39,8 @@ export default function Dashboard() {
       });
     } catch (err) {
       console.error("❌ Error cargando KPIs:", err);
-      setError("No se pudieron cargar los KPIs");
+      setError("Mostrando datos de ejemplo");
+      setKpis(sampleBasicKpis());
     }
   };
 
@@ -38,7 +48,6 @@ export default function Dashboard() {
     fetchKpis();
   }, []);
 
-  if (error) return <p className="p-4 text-red-600">{error}</p>;
   if (!kpis) return <p className="p-4">Cargando KPIs...</p>;
 
   const data = [
@@ -49,7 +58,8 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-10">
       <section>
-        <h2 className="text-2xl font-bold mb-6">KPIs Básicos</h2>
+        <h2 className="text-2xl font-bold mb-2">KPIs Básicos</h2>
+        {error && <p className="mb-4 text-yellow-600">{error}</p>}
 
         {/* Tarjetas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
